@@ -1,0 +1,31 @@
+/* Vino profundo + dorado: noche de gala. */
+:root{
+  --vino:#5c0f25; --vino-hondo:#2a0611; --vino-claro:#8a1f3c;
+  --oro:#d8b25a; --oro-claro:#f6e3a8; --oro-oscuro:#9c7a2e;
+  --marfil:#fbf3e4; --tinta:#2a0611;
+  --script:"Pinyon Script","Great Vibes",cursive;
+  --serif:"Cormorant Garamond","Cormorant",Georgia,serif;
+  --sans:"Montserrat",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{background:var(--vino-hondo);color:var(--marfil);font-family:var(--serif);-webkit-font-smoothing:antialiased}
+.fondo{background:
+  radial-gradient(ellipse 90% 60% at 50% 0%,rgba(216,178,90,.18),transparent 60%),
+  radial-gradient(ellipse 120% 80% at 50% 110%,var(--vino-claro),transparent 60%),
+  linear-gradient(160deg,var(--vino),var(--vino-hondo))}
+.oro-texto{background:linear-gradient(100deg,var(--oro-oscuro),var(--oro-claro) 35%,var(--oro) 55%,var(--oro-claro) 75%,var(--oro-oscuro));
+  -webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 100%;animation:brillo 6s linear infinite}
+@keyframes brillo{to{background-position:-200% 0}}
+.etiqueta{font-family:var(--sans);font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--oro)}
+.btn{font-family:var(--sans);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:.85rem;
+  border:0;border-radius:999px;padding:1.05em 1.6em;cursor:pointer;color:var(--vino-hondo);
+  background:linear-gradient(180deg,var(--oro-claro),var(--oro) 60%,var(--oro-oscuro));
+  box-shadow:0 8px 24px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6);transition:transform .15s,filter .15s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{filter:grayscale(.6) brightness(.8);cursor:wait}
+.btn.fantasma{background:transparent;color:var(--oro-claro);box-shadow:inset 0 0 0 1px var(--oro-oscuro)}
+:focus-visible{outline:2px solid var(--oro-claro);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

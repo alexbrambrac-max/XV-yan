@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QR para mesas · XV Yan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@500;600&display=swap">
+<link rel="stylesheet" href="/estilo.css">
+<style>
+body{display:grid;place-items:center;min-height:100vh;padding:24px}
+.tarjeta{width:min(100%,420px);text-align:center;display:grid;gap:14px;justify-items:center;padding:36px 28px;border:2px solid var(--oro);outline:1px solid var(--oro-oscuro);outline-offset:6px;border-radius:6px}
+h1{font-family:var(--script);font-weight:400;font-size:5rem;margin:0;line-height:1}
+.qr{width:78%;background:var(--marfil);padding:10px;border-radius:10px}
+.qr svg{display:block;width:100%}
+p{margin:0;font-size:1.3rem;font-style:italic}
+small{font-family:var(--sans);font-size:.75rem;color:var(--oro-claro);word-break:break-all}
+</style>
+</head>
+<body class="fondo">
+<div class="tarjeta">
+  <span class="etiqueta">Mis XV años</span>
+  <h1 class="oro-texto">Yan</h1>
+  <div class="qr" id="qr"></div>
+  <p>Escanea, tómate una selfie<br>y aparece en la pantalla</p>
+  <small id="url"></small>
+</div>
+<script src="/vendor/qrcode.js"></script><script src="/qr.js"></script>
+<script>const u = location.origin + "/"; document.getElementById("qr").innerHTML = qrSVG(u); document.getElementById("url").textContent = u.replace(/^https?:\/\//,"");</script>
+</body>
+</html>
