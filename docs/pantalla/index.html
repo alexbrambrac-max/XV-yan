@@ -171,15 +171,16 @@ body.quieto{cursor:none}
 <button id="pantallaCompleta" type="button">Pantalla completa</button>
 <div class="aviso" id="aviso" hidden></div>
 
-<script src="/vendor/qrcode.js"></script>
-<script src="/qr.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="../config.js"></script>
+<script src="../vendor/qrcode.js"></script>
+<script src="../qr.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
-const urlSubir = params.get("url") || (location.origin + "/");
+const urlSubir = params.get("url") || XV.URL_SUBIR;
 document.querySelectorAll("[data-qr]").forEach((el) => el.innerHTML = qrSVG(urlSubir, "#2a0611", "#fbf3e4"));
 const DURA = (+params.get("segundos") || 5) * 1000, DURA_NUEVA = (+params.get("nueva") || 8) * 1000;
-let CLAVE = params.get("clave") || ""; try { if (CLAVE) localStorage.setItem("xv-clave", CLAVE); else CLAVE = localStorage.getItem("xv-clave") || ""; } catch {}
 const reducido = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* escala el escenario 1920×1080 a cualquier pantalla */
@@ -187,24 +188,21 @@ function escalar(){ const k = Math.min(innerWidth/1920, innerHeight/1080); $("es
 escalar(); addEventListener("resize", escalar);
 
 /* datos */
-let fotos = [], ultimo = "", primeraCarga = true, ronda = [];
-const nuevas = [];
-const esc = (s) => String(s || "");
+let fotos = [], primeraCarga = true, ronda = [];
+const nuevas = [], urlDe = {};
 async function sondear(){
   try {
-    const r = await fetch("/api/fotos?since=" + encodeURIComponent(ultimo), {cache: "no-store", headers: {"x-clave": CLAVE}});
-    if (r.status === 401) { aviso("Falta la clave de la pantalla: abre /pantalla/?clave=…"); setTimeout(sondear, 10000); return; }
-    if (!r.ok) throw 0;
-    const {ids, items} = await r.json();
-    const vivos = new Set(ids);
+    const filas = await XV.listar();
+    const vivos = new Set(filas.map((r) => r.id));
     fotos = fotos.filter((f) => vivos.has(f.id));
     for (let i = nuevas.length - 1; i >= 0; i--) if (!vivos.has(nuevas[i].id)) nuevas.splice(i, 1);
-    for (const it of items.sort((a, b) => a.id < b.id ? -1 : 1)) {
-      if (fotos.some((f) => f.id === it.id)) continue;
+    const recientes = filas.filter((r) => !fotos.some((f) => f.id === r.id));
+    if (recientes.length) Object.assign(urlDe, await XV.urls(recientes.map((r) => r.path)));
+    for (const r of recientes) {
+      const it = { id: r.id, path: r.path, name: r.nombre || "", msg: r.mensaje || "" };
       fotos.push(it); if (!primeraCarga) nuevas.push(it);
-      new Image().src = "/api/foto/" + it.id;
+      if (urlDe[r.path]) new Image().src = urlDe[r.path];
     }
-    if (ids.length) ultimo = ids[ids.length - 1];
     primeraCarga = false; $("aviso").hidden = true;
     contar(fotos.length);
     modo(fotos.length > 0);
@@ -247,7 +245,7 @@ async function siguiente(){
   let dura = DURA;
   try {
     const sel = elegir(); if (!sel) return;
-    const {f, nueva} = sel; const src = "/api/foto/" + f.id;
+    const {f, nueva} = sel; const src = urlDe[f.path]; if (!src) return;
     const img = new Image(); img.src = src; img.alt = f.name ? "Foto de " + f.name : "Foto de un invitado";
     try { await img.decode(); } catch { return; }
     const capa = document.createElement("div"); capa.className = "capa";
@@ -304,7 +302,7 @@ let quieto; addEventListener("mousemove", () => { document.body.classList.remove
 async function despierta(){ try { await navigator.wakeLock?.request("screen"); } catch {} }
 despierta(); document.addEventListener("visibilitychange", () => { if (!document.hidden) despierta(); });
 
-sondear();
+XV.sesion(() => sondear());
 </script>
 </body>
 </html>

@@ -1,6 +1,0 @@
-[build]
-  publish = "public"
-  command = "echo listo"
-
-[functions]
-  directory = "netlify/functions"

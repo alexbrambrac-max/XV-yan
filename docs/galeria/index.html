@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Galería · XV Yan</title>
+<meta name="theme-color" content="#2a0611">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@500;600&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+<style>
+body{min-height:100dvh}
+.envoltura{max-width:1200px;margin:0 auto;padding-block:max(28px,env(safe-area-inset-top)) 40px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+header{text-align:center;display:grid;gap:4px;margin-bottom:22px}
+h1{font-family:var(--script);font-weight:400;font-size:clamp(3rem,12vw,5rem);margin:0;line-height:1}
+header p{margin:0;font-style:italic;font-size:1.15rem;color:var(--oro-claro)}
+.barra{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:24px}
+.barra .btn{padding:.9em 1.4em;font-size:.75rem}
+#progreso{text-align:center;font-family:var(--sans);font-size:.85rem;color:var(--oro-claro);min-height:1.2em;margin:-10px 0 18px}
+.rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.rejilla button{all:unset;cursor:pointer;display:block;aspect-ratio:4/5;border-radius:4px;overflow:hidden;background:var(--vino);box-shadow:0 0 0 2px var(--oro-oscuro);transition:transform .2s,box-shadow .2s}
+.rejilla button:hover,.rejilla button:focus-visible{transform:translateY(-3px);box-shadow:0 0 0 2px var(--oro-claro),0 10px 24px rgba(0,0,0,.4)}
+.rejilla img{width:100%;height:100%;object-fit:cover;display:block}
+.vacia{text-align:center;font-style:italic;font-size:1.2rem;color:var(--oro-claro);padding:40px 0;grid-column:1/-1}
+dialog{border:0;padding:0;background:transparent;max-width:min(96vw,900px);color:var(--marfil)}
+dialog::backdrop{background:rgba(20,3,8,.92)}
+.visor{display:grid;gap:14px;justify-items:center}
+.visor img{max-width:100%;max-height:72vh;border:6px solid var(--oro);border-radius:3px}
+.visor .quien{font-family:var(--script);font-size:2.6rem;color:var(--oro-claro);line-height:1}
+.visor .msj{font-style:italic;font-size:1.2rem;text-align:center}
+.visor .fila{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+</style>
+</head>
+<body class="fondo">
+<div class="envoltura">
+  <header>
+    <span class="etiqueta">Mis XV años · Galería</span>
+    <h1 class="oro-texto">Yan</h1>
+    <p id="cuantas">Cargando fotos…</p>
+  </header>
+  <div class="barra">
+    <button class="btn" type="button" id="zip">Descargar todas (ZIP)</button>
+    <a class="btn fantasma" href="../admin/" style="text-decoration:none">Panel</a>
+    <button class="btn fantasma" type="button" id="salir">Salir</button>
+  </div>
+  <div id="progreso" role="status"></div>
+  <div class="rejilla" id="rejilla"></div>
+</div>
+<dialog id="visor"><div class="visor">
+  <img id="vImg" alt="">
+  <span class="quien" id="vQuien"></span><span class="msj" id="vMsj"></span>
+  <div class="fila"><button class="btn" type="button" id="vBajar">Descargar</button><button class="btn fantasma" type="button" id="vCerrar">Cerrar</button></div>
+</div></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../config.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+let fotos = [], urls = {}, abierta = null;
+const nombreArchivo = (f, i) => `xv-yan-${String(i + 1).padStart(3, "0")}${f.nombre ? "-" + f.nombre.normalize("NFD").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase() : ""}.jpg`;
+
+async function cargar(){
+  try {
+    fotos = await XV.listar(); urls = await XV.urls(fotos.map((f) => f.path)); pintar();
+  } catch (e) { console.error(e); $("cuantas").textContent = "No pudimos cargar las fotos. Recarga la página."; }
+}
+function pintar(){
+  $("cuantas").textContent = fotos.length === 1 ? "1 foto guardada" : fotos.length + " fotos guardadas";
+  const g = $("rejilla"); g.innerHTML = "";
+  if (!fotos.length) { g.innerHTML = '<p class="vacia">Todavía no hay fotos.</p>'; return; }
+  fotos.slice().reverse().forEach((f) => {
+    const b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", f.nombre ? "Foto de " + f.nombre : "Foto");
+    const im = new Image(); im.loading = "lazy"; im.src = urls[f.path] || ""; im.alt = ""; b.append(im);
+    b.onclick = () => abrir(f); g.append(b);
+  });
+}
+function abrir(f){
+  abierta = f; $("vImg").src = urls[f.path] || ""; $("vImg").alt = f.nombre ? "Foto de " + f.nombre : "Foto";
+  $("vQuien").textContent = f.nombre || ""; $("vMsj").textContent = f.mensaje ? "“" + f.mensaje + "”" : ""; $("visor").showModal();
+}
+function guardar(blob, nombre){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
+$("vBajar").onclick = async () => {
+  if (!abierta) return; const i = fotos.indexOf(abierta);
+  const { data, error } = await XV.db.storage.from("fotos").download(abierta.path);
+  if (error) { alert("No se pudo descargar."); return; } guardar(data, nombreArchivo(abierta, i));
+};
+$("vCerrar").onclick = () => $("visor").close();
+$("visor").onclick = (e) => { if (e.target === $("visor")) $("visor").close(); };
+$("salir").onclick = () => XV.salir();
+$("zip").onclick = async () => {
+  if (!fotos.length) return; const b = $("zip"); b.disabled = true;
+  const zip = new JSZip(); let hechas = 0, fallas = 0;
+  const lista = fotos.map((f, i) => ({ f, i })); const trabajadores = 4;
+  async function trabaja(){ while (lista.length){ const { f, i } = lista.shift();
+    const { data, error } = await XV.db.storage.from("fotos").download(f.path);
+    if (error) fallas++; else zip.file(nombreArchivo(f, i), data);
+    hechas++; $("progreso").textContent = `Preparando ${hechas} de ${fotos.length} fotos…`; } }
+  await Promise.all(Array.from({ length: trabajadores }, trabaja));
+  $("progreso").textContent = "Comprimiendo…";
+  const blob = await zip.generateAsync({ type: "blob" });
+  guardar(blob, "fotos-xv-yan.zip");
+  $("progreso").textContent = fallas ? `Listo. ${fallas} foto(s) no se pudieron descargar; inténtalo de nuevo.` : `Listo: ${fotos.length} fotos descargadas.`;
+  b.disabled = false;
+};
+XV.sesion(() => { cargar(); setInterval(cargar, 30000); });
+</script>
+</body>
+</html>
