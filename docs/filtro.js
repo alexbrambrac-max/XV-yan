@@ -48,3 +48,16 @@ export async function revisar(canvas) {
   const cara = adulto ? false : await hayCara(canvas);
   return { cara, adulto, puntajes: { dibujo, hentai, neutral, porno, sexy } };
 }
+
+// Para la pantalla del salón: solo sale sola una foto CLARAMENTE normal.
+// Todo lo demás (escotes, mucha piel, desnudos aunque el modelo no los marque como "porno") espera aprobación.
+export async function puntajes(img) {
+  const nsfw = await precargar();
+  const salida = tf.tidy(() => {
+    const t = tf.browser.fromPixels(img).toFloat().div(255);
+    return nsfw.predict(tf.image.resizeBilinear(t, [224, 224], true).reshape([1, 224, 224, 3]));
+  });
+  const [dibujo, hentai, neutral, porno, sexy] = await salida.data(); salida.dispose();
+  return { dibujo, hentai, neutral, porno, sexy };
+}
+export const esClaramenteNormal = (p) => p.neutral >= 0.6 && p.porno < 0.15 && p.hentai < 0.15 && p.sexy < 0.4;

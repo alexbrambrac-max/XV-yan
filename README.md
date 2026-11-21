@@ -26,10 +26,12 @@ Antes de enviar, el celular del invitado revisa la foto, sin mandarla a ningún 
 
 Usa [face-api](https://github.com/vladmandic/face-api) (TinyFaceDetector, MIT) y el modelo MobileNetV2 de [NSFWJS](https://github.com/infinitered/nsfwjs) (MIT), alojados en `docs/vendor` y `docs/modelos`. Es un filtro en el navegador: no sustituye al panel `/admin/` para quitar algo que se cuele.
 
+**Segunda revisión en la pantalla.** La computadora del proyector revisa cada foto nueva antes de mostrarla. Solo salen solas las fotos *claramente normales*; las dudosas (escotes, mucha piel, posibles desnudos) quedan en **Por revisar** en el panel `/admin/` hasta que alguien las aprueba. Supabase obliga a que toda foto nueva entre como `nueva`: un invitado no puede marcarla como aprobada aunque se salte el filtro del celular (ver `supabase/02-revision.sql`).
+
 ## Puesta en marcha (una sola vez)
 
 1. Crea un proyecto gratis en [supabase.com](https://supabase.com).
-2. **SQL Editor → New query**: pega `supabase/setup.sql` y dale **Run**.
+2. **SQL Editor → New query**: pega `supabase/setup.sql` y dale **Run**. (Si tu proyecto ya existía, corre también `supabase/02-revision.sql`.)
 3. **Authentication → Sign In / Providers**: apaga **Allow new users to sign up**, para que nadie más pueda crear cuenta.
 4. **Authentication → Users → Add user → Create new user**: correo y contraseña de los dueños (marca *Auto Confirm User*).
 5. **Project Settings → API** (o **API Keys**): copia la **Project URL** y la clave **anon / publishable** en `docs/config.js`.

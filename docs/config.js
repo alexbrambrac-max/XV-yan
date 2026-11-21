@@ -19,7 +19,7 @@ window.XV = {
 
   /* Fotos (tabla public.fotos + bucket "fotos") */
   XV.listar = async function () {
-    const { data, error } = await XV.db.from("fotos").select("id,path,nombre,mensaje,created_at").order("created_at", { ascending: true });
+    const { data, error } = await XV.db.from("fotos").select("id,path,nombre,mensaje,estado,created_at").order("created_at", { ascending: true });
     if (error) throw error;
     return data;
   };
@@ -33,6 +33,10 @@ window.XV = {
       data.forEach((d) => { if (d.signedUrl) firmadas.set(d.path, { url: d.signedUrl, vence: ahora + 86400e3 }); });
     }
     const out = {}; paths.forEach((p) => { if (firmadas.has(p)) out[p] = firmadas.get(p).url; }); return out;
+  };
+  XV.marcar = async function (id, estado) {
+    const { error } = await XV.db.from("fotos").update({ estado }).eq("id", id);
+    if (error) throw error;
   };
   XV.borrar = async function (foto) {
     const r1 = await XV.db.storage.from("fotos").remove([foto.path]); if (r1.error) throw r1.error;

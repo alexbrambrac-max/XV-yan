@@ -7,6 +7,7 @@ create table if not exists public.fotos (
   path text not null unique check (path ~ '^[0-9a-f-]{36}\.jpg$'),
   nombre text check (char_length(nombre) <= 40),
   mensaje text check (char_length(mensaje) <= 90),
+  estado text not null default 'nueva' check (estado in ('nueva', 'aprobada', 'revisar', 'oculta')),
   created_at timestamptz not null default now()
 );
 alter table public.fotos enable row level security;
@@ -15,14 +16,17 @@ alter table public.fotos enable row level security;
 revoke all on public.fotos from anon, authenticated;
 grant insert on public.fotos to anon, authenticated;
 grant select, delete on public.fotos to authenticated;
+grant update (estado) on public.fotos to authenticated;
 
 -- Invitados (sin cuenta) solo pueden AGREGAR. Solo los dueños (con cuenta) pueden ver y borrar.
 drop policy if exists "invitados agregan" on public.fotos;
-create policy "invitados agregan" on public.fotos for insert to anon, authenticated with check (true);
+create policy "invitados agregan" on public.fotos for insert to anon, authenticated with check (estado = 'nueva');
 drop policy if exists "duenos ven" on public.fotos;
 create policy "duenos ven" on public.fotos for select to authenticated using (true);
 drop policy if exists "duenos borran" on public.fotos;
 create policy "duenos borran" on public.fotos for delete to authenticated using (true);
+drop policy if exists "duenos actualizan" on public.fotos;
+create policy "duenos actualizan" on public.fotos for update to authenticated using (true) with check (true);
 
 -- 2) Cajón privado para los archivos (máx. 5 MB, solo JPG)
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
