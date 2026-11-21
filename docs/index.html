@@ -63,7 +63,19 @@ label.btn,label.otra{-webkit-user-select:none;user-select:none;-webkit-tap-highl
 #p2 .arriba .script{font-size:40px;line-height:1;color:var(--oro-texto)}
 #p2 .arriba .mont{font-weight:500;font-size:11px;letter-spacing:.12em;color:var(--suave)}
 #p2 .borde-oro{margin-top:16px;box-shadow:0 18px 40px rgba(8,0,3,.55)}
-#p2 .vista{width:236px;height:290px;border-radius:12px;overflow:hidden;background:#5c1d30}
+#p2 .vista{position:relative;width:236px;height:290px;border-radius:12px;overflow:hidden;background:#5c1d30}
+/* revisando la foto */
+.revisando{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(42,6,17,.66);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:var(--oro-claro);transition:opacity .4s}
+.revisando.fuera{opacity:0;pointer-events:none}
+.revisando .aro-giro{width:52px;height:52px;border-radius:50%;border:3px solid rgba(246,227,168,.22);border-top-color:#f6e3a8;border-right-color:#d8b25a;animation:gira .9s linear infinite}
+.revisando p{margin:0;font-style:italic;font-size:21px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.revisando small{font-family:Montserrat,system-ui,sans-serif;font-weight:500;font-size:10px;letter-spacing:.18em;color:var(--suave)}
+.revisando::after{content:"";position:absolute;left:0;right:0;height:3px;top:0;background:linear-gradient(90deg,transparent,#f6e3a8,transparent);box-shadow:0 0 14px rgba(246,227,168,.8);animation:escanea 1.6s ease-in-out infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+@keyframes escanea{0%{top:0}50%{top:calc(100% - 3px)}100%{top:0}}
+.mini-giro{display:none;width:16px;height:16px;border-radius:50%;border:2px solid rgba(42,6,17,.25);border-top-color:#2a0611;animation:gira .8s linear infinite;position:relative}
+#enviar.cargando .mini-giro{display:inline-block}
+#enviar.cargando svg{display:none}
 #p2 .vista img{width:100%;height:100%;object-fit:cover;display:block}
 .otra{margin-top:10px;min-height:44px;padding:0 16px;border:none;background:transparent;color:var(--oro-claro);font-size:12px;letter-spacing:.16em;display:flex;align-items:center;gap:8px;cursor:pointer}
 .campos{width:100%;display:flex;flex-direction:column;gap:14px;margin-top:6px}
@@ -135,7 +147,7 @@ canvas#chispas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none
   </div>
   <p class="error" id="error2" role="alert"></p>
   <div class="crece"></div>
-  <button class="btn oro" type="submit" id="enviar"><i class="llenado" id="llenado"></i><span id="enviarTxt">ENVIAR A LA PANTALLA</span><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2a0611" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:relative"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  <button class="btn oro" type="submit" id="enviar"><i class="llenado" id="llenado"></i><i class="mini-giro" aria-hidden="true"></i><span id="enviarTxt">ENVIAR A LA PANTALLA</span><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2a0611" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:relative"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
 </form>
 
 <!-- Paso 3: ¡enviada! -->
@@ -197,18 +209,26 @@ async function comprimir(file){
 /* Revisión: que haya una cara y que no sea contenido para adultos */
 let lienzo = null, revision = "pendiente", turno = 0;
 const filtroListo = () => window.XVFiltro ? Promise.resolve(window.XVFiltro) : new Promise((ok) => addEventListener("xv-filtro", () => ok(window.XVFiltro), { once: true }));
-function estadoEnviar(texto, activo){ $("enviarTxt").textContent = texto; $("enviar").disabled = !activo; $("enviar").style.filter = activo ? "" : "grayscale(.5) brightness(.8)"; }
+function estadoEnviar(texto, activo, cargando = false){ $("enviarTxt").textContent = texto; $("enviar").disabled = !activo; $("enviar").classList.toggle("cargando", cargando); $("enviar").style.filter = activo || cargando ? "" : "grayscale(.5) brightness(.8)"; }
+function cargando(si){
+  let c = $("vista").querySelector(".revisando");
+  if (si) { if (!c) { c = document.createElement("div"); c.className = "revisando"; c.setAttribute("role", "status");
+      c.innerHTML = '<div class="aro-giro"></div><p>Revisando tu foto…</p><small>SOLO TOMA UNOS SEGUNDOS</small>'; $("vista").append(c); }
+    c.classList.remove("fuera"); }
+  else if (c) { c.classList.add("fuera"); setTimeout(() => c.remove(), 450); }
+}
 async function revisarFoto(){
   const mio = ++turno; revision = "pendiente"; $("error2").textContent = "";
-  estadoEnviar("REVISANDO FOTO…", false);
+  estadoEnviar("REVISANDO FOTO…", false, true); cargando(true);
   try {
     const r = await (await filtroListo()).revisar(lienzo);
     if (mio !== turno) return;
+    cargando(false);
     if (r.adulto) { revision = "bloqueada"; foto = null; estadoEnviar("ENVIAR A LA PANTALLA", false); $("error2").textContent = "Esta foto no se puede enviar. Por favor toma otra."; return; }
     if (!r.cara) { revision = "bloqueada"; foto = null; estadoEnviar("ENVIAR A LA PANTALLA", false); $("error2").textContent = "No encontramos ninguna cara. Asegúrate de que se vean tu nariz y tu boca (los lentes y sombreros sí se valen)."; return; }
     revision = "ok"; estadoEnviar("ENVIAR A LA PANTALLA", true);
   } catch (e) {
-    if (mio !== turno) return; console.error(e);
+    if (mio !== turno) return; console.error(e); cargando(false);
     revision = "error"; estadoEnviar("REINTENTAR REVISIÓN", true);
     $("error2").textContent = "No pudimos revisar tu foto. Revisa tu señal y vuelve a intentar.";
   }
@@ -234,8 +254,8 @@ $("p2").onsubmit = (e) => {
   if (!foto || revision !== "ok") return;
   const nombre = $("nombre").value.trim(), mensaje = $("mensaje").value.trim();
   try { localStorage.setItem("xv-nombre", nombre); } catch {}
-  $("enviar").disabled = true; $("enviarTxt").textContent = "ENVIANDO…"; $("error2").textContent = "";
-  const fin = () => { $("enviar").disabled = false; $("enviarTxt").textContent = "ENVIAR A LA PANTALLA"; $("llenado").style.transition = ""; $("llenado").style.width = "0"; };
+  $("enviar").disabled = true; $("enviar").classList.add("cargando"); $("enviarTxt").textContent = "ENVIANDO…"; $("error2").textContent = "";
+  const fin = () => { $("enviar").classList.remove("cargando"); $("enviar").disabled = false; $("enviarTxt").textContent = "ENVIAR A LA PANTALLA"; $("llenado").style.transition = ""; $("llenado").style.width = "0"; };
   if (!XV.listo) { fin(); $("error2").textContent = "La página aún no está configurada. Avisa a los organizadores."; return; }
   // barra de avance estimada (Supabase no reporta el progreso de subida)
   $("llenado").style.transition = "width 6s cubic-bezier(.1,.7,.3,1)"; requestAnimationFrame(() => $("llenado").style.width = "88%");
