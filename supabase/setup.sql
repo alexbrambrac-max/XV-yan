@@ -11,6 +11,11 @@ create table if not exists public.fotos (
 );
 alter table public.fotos enable row level security;
 
+-- Permisos explícitos (funciona aunque "Grant API access to new tables automatically" esté apagado)
+revoke all on public.fotos from anon, authenticated;
+grant insert on public.fotos to anon, authenticated;
+grant select, delete on public.fotos to authenticated;
+
 -- Invitados (sin cuenta) solo pueden AGREGAR. Solo los dueños (con cuenta) pueden ver y borrar.
 drop policy if exists "invitados agregan" on public.fotos;
 create policy "invitados agregan" on public.fotos for insert to anon, authenticated with check (true);
