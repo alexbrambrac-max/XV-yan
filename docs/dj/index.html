@@ -34,7 +34,9 @@ header .der{margin-left:auto;display:flex;gap:8px;align-items:center}
 .actual{position:relative;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:12px;min-height:0;background:var(--panel);border:1px solid var(--borde);border-radius:18px;padding:14px}
 .lienzo{position:relative;min-height:0;border-radius:12px;overflow:hidden;background:#0c0206;display:grid;place-items:center}
 .lienzo .fondo{position:absolute;inset:-30px;background-size:cover;background-position:center;filter:blur(28px) brightness(.45)}
-.lienzo img{position:relative;max-width:100%;max-height:100%;object-fit:contain;display:block}
+.lienzo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;z-index:1}
+.lienzo .vacio{position:relative;z-index:1}
+.sello{z-index:3}
 .lienzo.entra img{animation:entra .35s cubic-bezier(.2,.8,.2,1)}
 @keyframes entra{from{opacity:0;transform:scale(.96)}}
 .sello{position:absolute;inset:0;display:grid;place-items:center;font:700 64px Montserrat,sans-serif;letter-spacing:.1em;pointer-events:none;opacity:0}
@@ -47,7 +49,8 @@ header .der{margin-left:auto;display:flex;gap:8px;align-items:center}
 .datos{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;min-height:40px}
 .datos .nombre{font-family:"Pinyon Script",cursive;font-size:40px;line-height:1;color:#e9c977}
 .datos .msj{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:22px}
-.datos .hora{margin-left:auto;font-size:12px;color:var(--suave);font-variant-numeric:tabular-nums}
+.datos #bajarUna{margin-left:auto}
+.datos .hora{font-size:12px;color:var(--suave);font-variant-numeric:tabular-nums}
 .botones{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .decidir{height:84px;border:0;border-radius:14px;cursor:pointer;font:700 22px Montserrat,sans-serif;letter-spacing:.14em;color:#fff;display:flex;align-items:center;justify-content:center;gap:14px;transition:transform .1s,filter .15s}
 .decidir:active{transform:scale(.98)}
@@ -83,6 +86,8 @@ header .der{margin-left:auto;display:flex;gap:8px;align-items:center}
     <div class="chip"><i class="punto" id="punto"></i><span id="estado">Conectado</span></div>
     <div class="der">
       <button class="peq" type="button" id="sonido">🔔 Sonido: sí</button>
+      <button class="peq" type="button" id="zip">⬇ Descargar fotos (ZIP)</button>
+      <a class="peq" href="../galeria/" target="_blank" rel="noopener">Galería</a>
       <a class="peq" href="../pantalla/" target="_blank" rel="noopener">Abrir pantalla</a>
       <button class="peq" type="button" id="salir">Salir</button>
     </div>
@@ -94,7 +99,7 @@ header .der{margin-left:auto;display:flex;gap:8px;align-items:center}
         <div class="alerta-foto" id="alertaFoto" hidden>⚠ El filtro la marcó como dudosa (mucha piel o posible contenido sensible). Revísala con cuidado.</div>
         <div class="sello" id="sello"></div>
       </div>
-      <div class="datos"><span class="nombre" id="nombre"></span><span class="msj" id="msj"></span><span class="hora" id="hora"></span></div>
+      <div class="datos"><span class="nombre" id="nombre"></span><span class="msj" id="msj"></span><button class="peq" type="button" id="bajarUna" hidden>⬇ Descargar esta</button><span class="hora" id="hora"></span></div>
       <div class="botones">
         <button class="decidir no" type="button" id="rechazar" disabled>✕ RECHAZAR <kbd>←</kbd><kbd>R</kbd></button>
         <button class="decidir si" type="button" id="aceptar" disabled>✓ ACEPTAR <kbd>→</kbd><kbd>A</kbd></button>
@@ -111,6 +116,7 @@ header .der{margin-left:auto;display:flex;gap:8px;align-items:center}
 <div id="activar" hidden><div><button type="button" id="btnActivar">EMPEZAR A RECIBIR FOTOS</button><p>Activa el sonido de aviso para cada foto nueva.</p></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="../config.js"></script>
 <script type="module">
   import { precargar, puntajes, esClaramenteNormal } from "../filtro.js";
@@ -180,6 +186,7 @@ function mostrar(f){
   const L = $("lienzo"); L.querySelectorAll(".fondo,img").forEach((e) => e.remove());
   $("vacio").hidden = !!f; $("aceptar").disabled = $("rechazar").disabled = !f;
   $("nombre").textContent = f ? (f.nombre || "Sin nombre") : ""; $("msj").textContent = f && f.mensaje ? "“" + f.mensaje + "”" : "";
+  $("bajarUna").hidden = !f;
   $("hora").textContent = f ? new Date(f.created_at).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }) : "";
   $("alertaFoto").hidden = !(f && dudosa[f.id]);
   if (!f) return;
@@ -220,6 +227,29 @@ addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight" || e.key === "a" || e.key === "A") { e.preventDefault(); decidir(actual, "aprobada"); }
   if (e.key === "ArrowLeft" || e.key === "r" || e.key === "R") { e.preventDefault(); decidir(actual, "oculta"); }
 });
+/* Descargas */
+const nombreArchivo = (f, i) => `xv-yan-${String(i + 1).padStart(3, "0")}${f.nombre ? "-" + f.nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase() : ""}.jpg`;
+function guardar(blob, nombre){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
+$("bajarUna").onclick = async () => {
+  if (!actual) return; const i = fotos.findIndex((x) => x.id === actual.id);
+  const { data, error } = await XV.db.storage.from("fotos").download(actual.path);
+  if (error) { alert("No se pudo descargar."); return; } guardar(data, nombreArchivo(actual, i));
+};
+$("zip").onclick = async () => {
+  const lista = fotos.map((f, i) => ({ f, i })).filter((x) => x.f.estado !== "oculta"); // todas menos las rechazadas
+  if (!lista.length) { alert("Todavía no hay fotos para descargar."); return; }
+  const b = $("zip"), total = lista.length; b.disabled = true;
+  const zip = new JSZip(); let hechas = 0, fallas = 0;
+  async function trabaja(){ while (lista.length){ const { f, i } = lista.shift();
+    const { data, error } = await XV.db.storage.from("fotos").download(f.path);
+    if (error) fallas++; else zip.file(nombreArchivo(f, i), data);
+    b.textContent = `Preparando ${++hechas}/${total}…`; } }
+  await Promise.all([trabaja(), trabaja(), trabaja(), trabaja()]);
+  b.textContent = "Comprimiendo…";
+  guardar(await zip.generateAsync({ type: "blob" }), "fotos-xv-yan.zip");
+  b.textContent = fallas ? `⚠ ${fallas} no se bajaron` : "✓ Descargado"; b.disabled = false;
+  setTimeout(() => { b.textContent = "⬇ Descargar fotos (ZIP)"; }, 5000);
+};
 $("salir").onclick = () => XV.salir();
 XV.sesion(() => {
   $("activar").hidden = false;

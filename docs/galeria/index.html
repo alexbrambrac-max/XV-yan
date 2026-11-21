@@ -59,7 +59,7 @@ dialog::backdrop{background:rgba(20,3,8,.92)}
 <script>
 const $ = (id) => document.getElementById(id);
 let fotos = [], urls = {}, abierta = null;
-const nombreArchivo = (f, i) => `xv-yan-${String(i + 1).padStart(3, "0")}${f.nombre ? "-" + f.nombre.normalize("NFD").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase() : ""}.jpg`;
+const nombreArchivo = (f, i) => `xv-yan-${String(i + 1).padStart(3, "0")}${f.nombre ? "-" + f.nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase() : ""}.jpg`;
 
 async function cargar(){
   try {
