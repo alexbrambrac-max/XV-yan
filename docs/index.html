@@ -159,6 +159,13 @@ canvas#chispas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
+<script type="module">
+  import { precargar, revisar } from "./filtro.js";
+  window.XVFiltro = { precargar, revisar };
+  const arranca = () => precargar().catch(() => {});
+  "requestIdleCallback" in window ? requestIdleCallback(arranca, { timeout: 1500 }) : setTimeout(arranca, 800);
+  window.dispatchEvent(new Event("xv-filtro"));
+</script>
 <script>
 const $ = (id) => document.getElementById(id);
 const archivo = $("archivo"); let foto = null, fotoURL = "";
@@ -181,7 +188,28 @@ async function comprimir(file){
   const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth*k); c.height = Math.round(img.naturalHeight*k);
   c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
   URL.revokeObjectURL(img.src);
+  lienzo = c;
   return await new Promise((ok) => c.toBlob(ok, "image/jpeg", .86));
+}
+
+/* Revisión: que haya una cara y que no sea contenido para adultos */
+let lienzo = null, revision = "pendiente", turno = 0;
+const filtroListo = () => window.XVFiltro ? Promise.resolve(window.XVFiltro) : new Promise((ok) => addEventListener("xv-filtro", () => ok(window.XVFiltro), { once: true }));
+function estadoEnviar(texto, activo){ $("enviarTxt").textContent = texto; $("enviar").disabled = !activo; $("enviar").style.filter = activo ? "" : "grayscale(.5) brightness(.8)"; }
+async function revisarFoto(){
+  const mio = ++turno; revision = "pendiente"; $("error2").textContent = "";
+  estadoEnviar("REVISANDO FOTO…", false);
+  try {
+    const r = await (await filtroListo()).revisar(lienzo);
+    if (mio !== turno) return;
+    if (r.adulto) { revision = "bloqueada"; foto = null; estadoEnviar("ENVIAR A LA PANTALLA", false); $("error2").textContent = "Esta foto no se puede enviar. Por favor toma otra."; return; }
+    if (!r.cara) { revision = "bloqueada"; foto = null; estadoEnviar("ENVIAR A LA PANTALLA", false); $("error2").textContent = "No encontramos ninguna cara. Asegúrate de que se vean tu nariz y tu boca (los lentes y sombreros sí se valen)."; return; }
+    revision = "ok"; estadoEnviar("ENVIAR A LA PANTALLA", true);
+  } catch (e) {
+    if (mio !== turno) return; console.error(e);
+    revision = "error"; estadoEnviar("REINTENTAR REVISIÓN", true);
+    $("error2").textContent = "No pudimos revisar tu foto. Revisa tu señal y vuelve a intentar.";
+  }
 }
 
 archivo.onchange = async () => {
@@ -193,10 +221,13 @@ archivo.onchange = async () => {
   $("error2").textContent = "";
   if ($("p2").hidden) ir(2);
   else im.animate([{opacity:0, transform:"scale(1.06)"}, {opacity:1, transform:"scale(1)"}], {duration:500, easing:"ease-out"});
+  revisarFoto();
 };
 
 $("p2").onsubmit = (e) => {
-  e.preventDefault(); if (!foto) return;
+  e.preventDefault();
+  if (revision === "error") { revisarFoto(); return; }
+  if (!foto || revision !== "ok") return;
   const nombre = $("nombre").value.trim(), mensaje = $("mensaje").value.trim();
   try { localStorage.setItem("xv-nombre", nombre); } catch {}
   $("enviar").disabled = true; $("enviarTxt").textContent = "ENVIANDO…"; $("error2").textContent = "";

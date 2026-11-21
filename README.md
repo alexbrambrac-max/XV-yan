@@ -17,6 +17,15 @@ Los invitados escanean un QR, se toman una selfie y aparece al momento en la pan
 
 Los invitados **solo pueden subir**: no pueden ver, listar ni borrar fotos. Eso lo garantizan las reglas de `supabase/setup.sql`, no la página.
 
+## Filtro de fotos
+
+Antes de enviar, el celular del invitado revisa la foto, sin mandarla a ningún servidor:
+
+- **Que haya una cara visible.** Los lentes oscuros, sombreros y gorras sí pasan; objetos, memes o fotos sin personas no.
+- **Que no sea contenido para adultos.**
+
+Usa [face-api](https://github.com/vladmandic/face-api) (TinyFaceDetector, MIT) y el modelo MobileNetV2 de [NSFWJS](https://github.com/infinitered/nsfwjs) (MIT), alojados en `docs/vendor` y `docs/modelos`. Es un filtro en el navegador: no sustituye al panel `/admin/` para quitar algo que se cuele.
+
 ## Puesta en marcha (una sola vez)
 
 1. Crea un proyecto gratis en [supabase.com](https://supabase.com).
