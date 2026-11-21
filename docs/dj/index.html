@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>DJ · XV Yan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Montserrat:wght@500;600;700&display=swap">
+<style>
+/* Consola del DJ: oscura (cabina), acentos dorados. Decidir rápido: foto grande + dos botones enormes. */
+:root{--fondo:#14040a;--panel:#22070f;--borde:rgba(216,178,90,.28);--oro:#d8b25a;--oro-claro:#f6e3a8;--marfil:#fbf3e4;--suave:#c9ab8c;
+  --ok:#3fbf7f;--ok-osc:#1f7a4f;--no:#e0475f;--no-osc:#8e1f33;--aviso:#ffb547;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{background:var(--fondo);color:var(--marfil);font-family:Montserrat,system-ui,sans-serif;overflow:hidden}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr;gap:14px;padding:14px 18px 18px}
+header{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+header .marca{display:flex;align-items:baseline;gap:10px}
+header .marca b{font-family:"Pinyon Script",cursive;font-weight:400;font-size:38px;color:#e9c977;line-height:1}
+header .marca span{font-size:11px;letter-spacing:.35em;color:var(--oro);font-weight:600}
+.chip{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--borde);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.chip strong{font-size:18px}
+.chip.alerta{border-color:var(--aviso);color:var(--aviso)}
+.punto{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(63,191,127,.6);animation:latido 2s infinite}
+.punto.mal{background:var(--no);animation:none}
+@keyframes latido{70%{box-shadow:0 0 0 8px rgba(63,191,127,0)}}
+header .der{margin-left:auto;display:flex;gap:8px;align-items:center}
+.peq{height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--borde);background:transparent;color:var(--oro-claro);font:600 11px Montserrat,sans-serif;letter-spacing:.12em;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.peq:hover{border-color:var(--oro)}
+.cuerpo{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;min-height:0}
+/* foto actual */
+.actual{position:relative;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:12px;min-height:0;background:var(--panel);border:1px solid var(--borde);border-radius:18px;padding:14px}
+.lienzo{position:relative;min-height:0;border-radius:12px;overflow:hidden;background:#0c0206;display:grid;place-items:center}
+.lienzo .fondo{position:absolute;inset:-30px;background-size:cover;background-position:center;filter:blur(28px) brightness(.45)}
+.lienzo img{position:relative;max-width:100%;max-height:100%;object-fit:contain;display:block}
+.lienzo.entra img{animation:entra .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes entra{from{opacity:0;transform:scale(.96)}}
+.sello{position:absolute;inset:0;display:grid;place-items:center;font:700 64px Montserrat,sans-serif;letter-spacing:.1em;pointer-events:none;opacity:0}
+.sello.si{color:var(--ok);animation:sello .55s ease-out}
+.sello.no{color:var(--no);animation:sello .55s ease-out}
+@keyframes sello{0%{opacity:0;transform:scale(1.4)}30%{opacity:1;transform:scale(1)}100%{opacity:0}}
+.alerta-foto{position:absolute;top:12px;left:12px;right:12px;z-index:2;display:flex;gap:10px;align-items:center;padding:12px 16px;border-radius:10px;background:#3a1d05;border:2px solid var(--aviso);color:#ffd9a0;font-size:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.vacio{text-align:center;display:grid;gap:10px;place-items:center;color:var(--suave);padding:30px}
+.vacio b{font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:400;font-size:34px;color:var(--marfil)}
+.datos{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;min-height:40px}
+.datos .nombre{font-family:"Pinyon Script",cursive;font-size:40px;line-height:1;color:#e9c977}
+.datos .msj{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:22px}
+.datos .hora{margin-left:auto;font-size:12px;color:var(--suave);font-variant-numeric:tabular-nums}
+.botones{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.decidir{height:84px;border:0;border-radius:14px;cursor:pointer;font:700 22px Montserrat,sans-serif;letter-spacing:.14em;color:#fff;display:flex;align-items:center;justify-content:center;gap:14px;transition:transform .1s,filter .15s}
+.decidir:active{transform:scale(.98)}
+.decidir:disabled{filter:grayscale(1) brightness(.5);cursor:default}
+.decidir kbd{font:600 12px Montserrat,sans-serif;letter-spacing:0;padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.25)}
+.decidir.no{background:linear-gradient(180deg,var(--no),var(--no-osc))}
+.decidir.si{background:linear-gradient(180deg,var(--ok),var(--ok-osc))}
+:focus-visible{outline:3px solid var(--oro-claro);outline-offset:3px}
+/* columna */
+.col{display:grid;grid-template-rows:auto minmax(0,1fr) auto minmax(0,1fr);gap:10px;min-height:0}
+.col h2{margin:4px 0 0;font-size:12px;letter-spacing:.25em;color:var(--oro);font-weight:700;display:flex;justify-content:space-between}
+.lista{min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-content:start;padding:2px}
+.mini{position:relative;aspect-ratio:3/4;border-radius:8px;overflow:hidden;background:#0c0206;border:1px solid var(--borde)}
+.mini img{width:100%;height:100%;object-fit:cover;display:block}
+.mini.sig{outline:2px solid var(--oro)}
+.mini .q{position:absolute;top:5px;right:5px;width:30px;height:30px;border:2px solid rgba(255,255,255,.85);border-radius:50%;background:rgba(142,31,51,.95);color:#fff;font:700 14px/1 Montserrat,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.mini .q:hover{background:var(--no)}
+.mini .w{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:var(--aviso);color:#14040a;font:700 12px/18px Montserrat;text-align:center}
+.nada{grid-column:1/-1;color:var(--suave);font-size:12px;padding:8px 2px}
+#activar{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(20,4,10,.92)}
+#activar button{height:70px;padding:0 34px;border:0;border-radius:999px;background:linear-gradient(180deg,#fff1c4,#d8b25a 55%,#b98a35);color:#2a0611;font:700 16px Montserrat;letter-spacing:.18em;cursor:pointer}
+#activar p{color:var(--suave);font-size:13px;margin:14px 0 0;text-align:center}
+@media (max-width:900px){body{overflow:auto}.cuerpo{grid-template-columns:1fr}.actual{min-height:70vh}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="marca"><b>Yan</b><span>CONSOLA DEL DJ</span></div>
+    <div class="chip" id="chipPend"><strong id="nPend">0</strong> por revisar</div>
+    <div class="chip"><strong id="nOk">0</strong> en pantalla</div>
+    <div class="chip"><i class="punto" id="punto"></i><span id="estado">Conectado</span></div>
+    <div class="der">
+      <button class="peq" type="button" id="sonido">🔔 Sonido: sí</button>
+      <a class="peq" href="../pantalla/" target="_blank" rel="noopener">Abrir pantalla</a>
+      <button class="peq" type="button" id="salir">Salir</button>
+    </div>
+  </header>
+  <div class="cuerpo">
+    <section class="actual" aria-live="polite">
+      <div class="lienzo" id="lienzo">
+        <div class="vacio" id="vacio"><b>Sin fotos por revisar</b><span>Cuando un invitado suba una foto aparecerá aquí y sonará un aviso.</span></div>
+        <div class="alerta-foto" id="alertaFoto" hidden>⚠ El filtro la marcó como dudosa (mucha piel o posible contenido sensible). Revísala con cuidado.</div>
+        <div class="sello" id="sello"></div>
+      </div>
+      <div class="datos"><span class="nombre" id="nombre"></span><span class="msj" id="msj"></span><span class="hora" id="hora"></span></div>
+      <div class="botones">
+        <button class="decidir no" type="button" id="rechazar" disabled>✕ RECHAZAR <kbd>←</kbd><kbd>R</kbd></button>
+        <button class="decidir si" type="button" id="aceptar" disabled>✓ ACEPTAR <kbd>→</kbd><kbd>A</kbd></button>
+      </div>
+    </section>
+    <aside class="col">
+      <h2><span>EN ESPERA</span><span id="nEspera">0</span></h2>
+      <div class="lista" id="espera"></div>
+      <h2><span>EN PANTALLA</span><span id="nOk2">0</span></h2>
+      <div class="lista" id="enPantalla"></div>
+    </aside>
+  </div>
+</div>
+<div id="activar" hidden><div><button type="button" id="btnActivar">EMPEZAR A RECIBIR FOTOS</button><p>Activa el sonido de aviso para cada foto nueva.</p></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="../config.js"></script>
+<script type="module">
+  import { precargar, puntajes, esClaramenteNormal } from "../filtro.js";
+  window.XVFiltro = { precargar, puntajes, esClaramenteNormal };
+  precargar().catch(() => {});
+  window.dispatchEvent(new Event("xv-filtro"));
+</script>
+<script>
+const $ = (id) => document.getElementById(id);
+let fotos = [], urls = {}, actual = null, ocupado = false, primera = true, conSonido = true;
+const dudosa = {}; // id → true/false según el filtro
+const decididas = {}; // id → estado que eligió el DJ (mientras el servidor lo confirma)
+try { conSonido = localStorage.getItem("xv-dj-sonido") !== "no"; } catch {}
+const pendientes = () => fotos.filter((f) => f.estado === "nueva" || f.estado === "revisar");
+const aprobadas = () => fotos.filter((f) => f.estado === "aprobada");
+
+/* sonido de aviso (dos notas suaves) */
+let ctx = null;
+function aviso(){
+  if (!conSonido || !ctx) return;
+  const t = ctx.currentTime;
+  [[880, 0], [1318.5, .12]].forEach(([f, d]) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = f;
+    g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(.25, t + d + .02); g.gain.exponentialRampToValueAtTime(.001, t + d + .5);
+    o.connect(g).connect(ctx.destination); o.start(t + d); o.stop(t + d + .55); });
+}
+$("sonido").onclick = () => { conSonido = !conSonido; $("sonido").textContent = conSonido ? "🔔 Sonido: sí" : "🔕 Sonido: no"; try { localStorage.setItem("xv-dj-sonido", conSonido ? "si" : "no"); } catch {} if (conSonido) { ctx ||= new AudioContext(); aviso(); } };
+$("sonido").textContent = conSonido ? "🔔 Sonido: sí" : "🔕 Sonido: no";
+
+/* filtro como pista para el DJ (no decide solo) */
+const filtroListo = () => window.XVFiltro ? Promise.resolve(window.XVFiltro) : new Promise((ok) => addEventListener("xv-filtro", () => ok(window.XVFiltro), { once: true }));
+async function revisarPista(f){
+  if (f.id in dudosa) return;
+  dudosa[f.id] = false;
+  try { const F = await filtroListo(); const im = new Image(); im.crossOrigin = "anonymous"; im.src = urls[f.path]; await im.decode();
+    dudosa[f.id] = !F.esClaramenteNormal(await F.puntajes(im)); pintar(); } catch (e) { console.error(e); }
+}
+
+async function cargar(){
+  try {
+    const nuevas = await XV.listar();
+    const antes = new Set(pendientes().map((f) => f.id));
+    fotos = nuevas.map((f) => { const d = decididas[f.id]; if (!d) return f; if (f.estado === d) { delete decididas[f.id]; return f; } return { ...f, estado: d }; });
+    Object.assign(urls, await XV.urls(fotos.filter((f) => !urls[f.path]).map((f) => f.path)));
+    const llegaron = pendientes().filter((f) => !antes.has(f.id));
+    if (llegaron.length && !primera) aviso();
+    primera = false;
+    $("punto").classList.remove("mal"); $("estado").textContent = "Conectado";
+    pendientes().forEach(revisarPista);
+    pintar();
+  } catch (e) { console.error(e); $("punto").classList.add("mal"); $("estado").textContent = "Sin conexión…"; }
+}
+
+function pintar(){
+  const p = pendientes(), a = aprobadas();
+  $("nPend").textContent = p.length; $("chipPend").classList.toggle("alerta", p.length > 0); $("nOk").textContent = a.length; $("nOk2").textContent = a.length; $("nEspera").textContent = Math.max(0, p.length - 1);
+  document.title = (p.length ? `(${p.length}) ` : "") + "DJ · XV Yan";
+  // foto actual: la más antigua pendiente
+  const sig = p[0] || null;
+  if (!sig) { actual = null; mostrar(null); }
+  else if (!actual || actual.id !== sig.id) { actual = sig; mostrar(sig); }
+  else $("alertaFoto").hidden = !dudosa[sig.id];
+  // fila de espera
+  lista($("espera"), p.slice(1), false, "Nada más en espera.");
+  lista($("enPantalla"), a.slice().reverse(), true, "Todavía no hay fotos en pantalla.");
+}
+function mostrar(f){
+  const L = $("lienzo"); L.querySelectorAll(".fondo,img").forEach((e) => e.remove());
+  $("vacio").hidden = !!f; $("aceptar").disabled = $("rechazar").disabled = !f;
+  $("nombre").textContent = f ? (f.nombre || "Sin nombre") : ""; $("msj").textContent = f && f.mensaje ? "“" + f.mensaje + "”" : "";
+  $("hora").textContent = f ? new Date(f.created_at).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }) : "";
+  $("alertaFoto").hidden = !(f && dudosa[f.id]);
+  if (!f) return;
+  const fondo = document.createElement("div"); fondo.className = "fondo"; fondo.style.backgroundImage = `url("${urls[f.path]}")`;
+  const im = new Image(); im.src = urls[f.path]; im.alt = f.nombre ? "Foto de " + f.nombre : "Foto de un invitado";
+  L.prepend(fondo); L.insertBefore(im, $("vacio"));
+  L.classList.remove("entra"); void L.offsetWidth; L.classList.add("entra");
+}
+function lista(cont, items, conQuitar, vacioTxt){
+  const ids = items.map((f) => f.id).join(",");
+  if (cont.dataset.ids === ids) { cont.querySelectorAll(".mini").forEach((m) => { const w = m.querySelector(".w"); if (w) w.hidden = !dudosa[m.dataset.id]; }); return; }
+  cont.dataset.ids = ids; cont.innerHTML = "";
+  if (!items.length) { cont.innerHTML = `<div class="nada">${vacioTxt}</div>`; return; }
+  for (const f of items) {
+    const m = document.createElement("div"); m.className = "mini"; m.dataset.id = f.id;
+    m.innerHTML = '<img loading="lazy" alt="">' + (conQuitar ? '<button class="q" type="button" title="Quitar de la pantalla" aria-label="Quitar de la pantalla">✕</button>' : '<span class="w" hidden>!</span>');
+    m.querySelector("img").src = urls[f.path] || ""; m.title = f.nombre || "Sin nombre";
+    if (conQuitar) m.querySelector(".q").onclick = () => decidir(f, "oculta", m);
+    else m.querySelector(".w").hidden = !dudosa[f.id];
+    cont.append(m);
+  }
+}
+async function decidir(f, estado, mini){
+  if (!f || ocupado) return; ocupado = true;
+  const esActual = actual && f.id === actual.id;
+  if (esActual) { const s = $("sello"); s.className = "sello " + (estado === "aprobada" ? "si" : "no"); s.textContent = estado === "aprobada" ? "✓ ACEPTADA" : "✕ RECHAZADA"; $("aceptar").disabled = $("rechazar").disabled = true; }
+  if (mini) mini.style.opacity = ".4";
+  const aplicar = (e) => fotos.forEach((x) => { if (x.id === f.id) x.estado = e; });
+  const previo = f.estado; decididas[f.id] = estado; aplicar(estado); pintar();
+  try { await XV.marcar(f.id, estado); }
+  catch (e) { console.error(e); delete decididas[f.id]; aplicar(previo); alert("No se pudo guardar. Revisa la conexión e inténtalo de nuevo."); }
+  ocupado = false; pintar();
+}
+$("aceptar").onclick = () => decidir(actual, "aprobada");
+$("rechazar").onclick = () => decidir(actual, "oculta");
+addEventListener("keydown", (e) => {
+  if (e.target.closest("input,textarea") || !actual) return;
+  if (e.key === "ArrowRight" || e.key === "a" || e.key === "A") { e.preventDefault(); decidir(actual, "aprobada"); }
+  if (e.key === "ArrowLeft" || e.key === "r" || e.key === "R") { e.preventDefault(); decidir(actual, "oculta"); }
+});
+$("salir").onclick = () => XV.salir();
+XV.sesion(() => {
+  $("activar").hidden = false;
+  $("btnActivar").onclick = () => { try { ctx = new AudioContext(); aviso(); } catch {} $("activar").hidden = true; };
+  cargar(); setInterval(cargar, 2000);
+});
+</script>
+</body>
+</html>

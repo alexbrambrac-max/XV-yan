@@ -175,12 +175,6 @@ body.quieto{cursor:none}
 <script src="../config.js"></script>
 <script src="../vendor/qrcode.js"></script>
 <script src="../qr.js"></script>
-<script type="module">
-  import { precargar, puntajes, esClaramenteNormal } from "../filtro.js";
-  window.XVFiltro = { precargar, puntajes, esClaramenteNormal };
-  precargar().catch(() => {});
-  window.dispatchEvent(new Event("xv-filtro"));
-</script>
 <script>
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -196,29 +190,10 @@ escalar(); addEventListener("resize", escalar);
 /* datos */
 let fotos = [], primeraCarga = true, ronda = [];
 const nuevas = [], urlDe = {};
-/* Revisión en la pantalla: las fotos nuevas solo salen si son claramente normales;
-   las dudosas quedan "por revisar" en el panel hasta que alguien las apruebe. */
-const filtroListo = () => window.XVFiltro ? Promise.resolve(window.XVFiltro) : new Promise((ok) => addEventListener("xv-filtro", () => ok(window.XVFiltro), { once: true }));
-let errorRevision = false;
-async function revisarNuevas(filas){
-  const pendientes = filas.filter((r) => r.estado === "nueva").slice(0, 6);
-  if (!pendientes.length) return;
-  const F = await filtroListo(); await F.precargar();
-  const urls = await XV.urls(pendientes.map((r) => r.path));
-  for (const r of pendientes) {
-    try {
-      const img = new Image(); img.crossOrigin = "anonymous"; img.src = urls[r.path]; await img.decode();
-      const estado = F.esClaramenteNormal(await F.puntajes(img)) ? "aprobada" : "revisar";
-      await XV.marcar(r.id, estado); r.estado = estado;
-    } catch (e) { console.error("No se pudo revisar", r.id, e); }
-  }
-}
 async function sondear(){
   try {
-    const todas = await XV.listar();
-    errorRevision = false;
-    try { await revisarNuevas(todas); } catch (e) { console.error(e); errorRevision = true; aviso("No se pudieron revisar las fotos nuevas; quedan pendientes en el panel."); }
-    const filas = todas.filter((r) => r.estado === "aprobada");
+    // Solo salen las fotos que el DJ (o el panel) aceptó.
+    const filas = (await XV.listar()).filter((r) => r.estado === "aprobada");
     const vivos = new Set(filas.map((r) => r.id));
     fotos = fotos.filter((f) => vivos.has(f.id));
     for (let i = nuevas.length - 1; i >= 0; i--) if (!vivos.has(nuevas[i].id)) nuevas.splice(i, 1);
@@ -229,7 +204,7 @@ async function sondear(){
       fotos.push(it); if (!primeraCarga) nuevas.push(it);
       if (urlDe[r.path]) new Image().src = urlDe[r.path];
     }
-    primeraCarga = false; if (!errorRevision) $("aviso").hidden = true;
+    primeraCarga = false; $("aviso").hidden = true;
     contar(fotos.length);
     modo(fotos.length > 0);
     if (fotos.length && !actual) siguiente();

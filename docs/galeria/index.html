@@ -63,7 +63,7 @@ const nombreArchivo = (f, i) => `xv-yan-${String(i + 1).padStart(3, "0")}${f.nom
 
 async function cargar(){
   try {
-    fotos = await XV.listar(); urls = await XV.urls(fotos.map((f) => f.path)); pintar();
+    fotos = (await XV.listar()).filter((f) => f.estado !== "oculta"); urls = await XV.urls(fotos.map((f) => f.path)); pintar();
   } catch (e) { console.error(e); $("cuantas").textContent = "No pudimos cargar las fotos. Recarga la página."; }
 }
 function pintar(){

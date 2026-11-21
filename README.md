@@ -11,7 +11,8 @@ Los invitados escanean un QR, se toman una selfie y aparece al momento en la pan
 |---|---|---|
 | `/` | Invitados (destino del QR) | Tomar o elegir foto, nombre, mensaje y enviar |
 | `/qr/` | Impresión | Tarjeta con el QR para las mesas |
-| `/pantalla/` | Proyector (cuenta de dueños) | Espera con QR y carrusel en vivo |
+| `/pantalla/` | Proyector (cuenta de dueños) | Espera con QR y carrusel; solo muestra fotos aceptadas |
+| `/dj/` | DJ (cuenta de dueños) | Llegan las fotos; el DJ las **acepta o rechaza** antes de que salgan |
 | `/galeria/` | Dueños | Ver, descargar una foto o todas en ZIP |
 | `/admin/` | Dueños | Quitar fotos |
 
@@ -26,7 +27,7 @@ Antes de enviar, el celular del invitado revisa la foto, sin mandarla a ningún 
 
 Usa [face-api](https://github.com/vladmandic/face-api) (TinyFaceDetector, MIT) y el modelo MobileNetV2 de [NSFWJS](https://github.com/infinitered/nsfwjs) (MIT), alojados en `docs/vendor` y `docs/modelos`. Es un filtro en el navegador: no sustituye al panel `/admin/` para quitar algo que se cuele.
 
-**Segunda revisión en la pantalla.** La computadora del proyector revisa cada foto nueva antes de mostrarla. Solo salen solas las fotos *claramente normales*; las dudosas (escotes, mucha piel, posibles desnudos) quedan en **Por revisar** en el panel `/admin/` hasta que alguien las aprueba. Supabase obliga a que toda foto nueva entre como `nueva`: un invitado no puede marcarla como aprobada aunque se salte el filtro del celular (ver `supabase/02-revision.sql`).
+**Aprobación del DJ.** Ninguna foto sale en la pantalla sin que alguien la acepte en `/dj/` (o en `/admin/`). La consola del DJ suena con cada foto nueva, marca con ⚠ las que el filtro ve dudosas y se maneja con teclado (→/A acepta, ←/R rechaza). Las rechazadas no salen en pantalla ni en el ZIP. Supabase obliga a que toda foto nueva entre como `nueva`: un invitado no puede aprobar su propia foto (ver `supabase/02-revision.sql`).
 
 ## Puesta en marcha (una sola vez)
 
@@ -40,7 +41,8 @@ Usa [face-api](https://github.com/vladmandic/face-api) (TinyFaceDetector, MIT) y
 ## El día de la fiesta
 
 - **Antes:** entra a Supabase y verifica que el proyecto esté activo. El plan gratis lo pausa tras 7 días sin uso; se reactiva con **Restore**.
-- Abre `/pantalla/` en la computadora del proyector, entra con la cuenta de los dueños y presiona **F** para pantalla completa.
+- En la laptop del DJ abre `/dj/` y entra con la cuenta de los dueños.
+- Abre `/pantalla/` en otra ventana, arrástrala al proyector (segunda pantalla) y presiona **F** para pantalla completa.
 - Imprime `/qr/` para las mesas.
 - **Después:** `/galeria/` → **Descargar todas (ZIP)**.
 
