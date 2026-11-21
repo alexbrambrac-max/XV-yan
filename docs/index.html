@@ -33,6 +33,8 @@ body{font-family:"Cormorant Garamond",Georgia,serif;color:var(--marfil);-webkit-
 .esq.d{right:10px;bottom:10px;border-right-width:1.5px;border-bottom-width:1.5px}
 .btn{width:100%;border:none;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;font-family:Montserrat,system-ui,sans-serif;font-weight:600;transition:transform .12s,filter .2s}
 .btn:active{transform:scale(.97)}
+label.btn,label.otra{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.oculto{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);left:0;top:0}
 .btn.oro{height:58px;font-size:15px;letter-spacing:.2em;color:var(--tinta);background:linear-gradient(180deg,#fff1c4,#d8b25a 55%,#b98a35);box-shadow:0 10px 24px rgba(8,0,3,.5);position:relative;overflow:hidden}
 .btn.linea{height:52px;font-size:13px;letter-spacing:.2em;color:var(--oro-claro);background:transparent;border:1.5px solid var(--oro-oscuro)}
 .btn:disabled{cursor:wait}
@@ -92,7 +94,8 @@ canvas#chispas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none
 </style>
 </head>
 <body>
-<input id="archivo" type="file" accept="image/*" capture="user" hidden>
+<input id="camara" class="oculto" type="file" accept="image/*" capture="user" tabindex="-1" aria-hidden="true">
+<input id="galeria" class="oculto" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
 
 <!-- Paso 1: tomar o elegir foto -->
 <main class="paso" id="p1">
@@ -111,8 +114,8 @@ canvas#chispas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none
   <p class="error" id="error1" role="alert"></p>
   <div class="crece"></div>
   <div class="acciones">
-    <button class="btn oro" type="button" id="tomar"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2a0611" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>TOMAR SELFIE</span></button>
-    <button class="btn linea" type="button" id="elegir"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f6e3a8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg>ELEGIR DE MI GALERÍA</button>
+    <label for="camara" role="button" tabindex="0" class="btn oro" id="tomar"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2a0611" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>TOMAR SELFIE</span></label>
+    <label for="galeria" role="button" tabindex="0" class="btn linea" id="elegir"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f6e3a8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg>ELEGIR DE MI GALERÍA</label>
   </div>
   <div class="nota">Paso 1 de 2 · Sin descargar apps</div>
 </main>
@@ -121,7 +124,7 @@ canvas#chispas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none
 <form class="paso" id="p2" hidden novalidate>
   <div class="arriba"><div class="script">Yan</div><div class="mont">Paso 2 de 2</div></div>
   <div class="borde-oro"><div class="vista" id="vista"></div></div>
-  <button class="otra mont" type="button" id="otra"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6e3a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>TOMAR OTRA</button>
+  <label for="camara" role="button" tabindex="0" class="otra mont" id="otra"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6e3a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>TOMAR OTRA</label>
   <div class="campos">
     <label class="mont" for="nombre">TU NOMBRE
       <input id="nombre" type="text" maxlength="40" placeholder="Ej. Tía Mary" autocomplete="given-name">
@@ -168,7 +171,7 @@ canvas#chispas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none
 </script>
 <script>
 const $ = (id) => document.getElementById(id);
-const archivo = $("archivo"); let foto = null, fotoURL = "";
+let foto = null, fotoURL = "";
 try { $("nombre").value = localStorage.getItem("xv-nombre") || ""; } catch {}
 
 function ir(n){
@@ -176,9 +179,8 @@ function ir(n){
   const el = $("p" + n); el.classList.remove("entra"); void el.offsetWidth; el.classList.add("entra");
   scrollTo(0, 0);
 }
-$("tomar").onclick = () => { archivo.setAttribute("capture", "user"); archivo.click(); };
-$("elegir").onclick = () => { archivo.removeAttribute("capture"); archivo.click(); };
-$("otra").onclick = () => { archivo.setAttribute("capture", "user"); archivo.click(); };
+// Los botones son <label for="…">: abren la cámara o la galería de forma nativa.
+for (const id of ["tomar", "elegir", "otra"]) $(id).addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $(id).click(); } });
 $("mas").onclick = () => { foto = null; $("error1").textContent = ""; ir(1); };
 
 // Reduce la foto en el celular para que suba rápido aunque la señal sea mala.
@@ -212,8 +214,8 @@ async function revisarFoto(){
   }
 }
 
-archivo.onchange = async () => {
-  const f = archivo.files[0]; archivo.value = ""; if (!f) return;
+async function alElegir(e) {
+  const entrada = e.target, f = entrada.files[0]; entrada.value = ""; if (!f) return;
   const err = $("p1").hidden ? $("error2") : $("error1"); err.textContent = "";
   try { foto = await comprimir(f); } catch { err.textContent = "No pudimos abrir esa foto. Intenta con otra."; return; }
   if (fotoURL) URL.revokeObjectURL(fotoURL); fotoURL = URL.createObjectURL(foto);
@@ -222,7 +224,9 @@ archivo.onchange = async () => {
   if ($("p2").hidden) ir(2);
   else im.animate([{opacity:0, transform:"scale(1.06)"}, {opacity:1, transform:"scale(1)"}], {duration:500, easing:"ease-out"});
   revisarFoto();
-};
+}
+$("camara").addEventListener("change", alElegir);
+$("galeria").addEventListener("change", alElegir);
 
 $("p2").onsubmit = (e) => {
   e.preventDefault();
