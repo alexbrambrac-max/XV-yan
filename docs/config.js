@@ -4,8 +4,8 @@
    es pública por diseño: la seguridad la ponen las reglas de supabase/setup.sql.
    ============================================================ */
 window.XV = {
-  SUPABASE_URL: "https://TU-PROYECTO.supabase.co",
-  SUPABASE_KEY: "TU-CLAVE-ANON-O-PUBLISHABLE",
+  SUPABASE_URL: "https://oaijhtmjicfzhhzhsudb.supabase.co",
+  SUPABASE_KEY: "sb_publishable_SFTV_r80dHi1S4BhIPAZlw_rQIZIFm_",
 };
 
 /* ---------- no hace falta tocar nada de aquí para abajo ---------- */
